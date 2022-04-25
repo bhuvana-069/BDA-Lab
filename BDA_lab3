@@ -1,0 +1,123 @@
+1.Create a key space by name Employee
+>CREATE KEYSPACE employee_db WITH replication ={'class':'SimpleStrategy', 'replication_factor' : 3};
+>use keyspace employee_db;
+
+2.Create a column family by name Employee-Info with attributes Emp_Id Primary Key, Emp_Name, Designation, Date_of_Joining, Salary, Dept_Name
+>CREATE TABLE employee_info(
+ emp_id int primary key,emp_name text,designation text,date_of_joining timestamp,salary int,dept_name text);
+
+3.Insert the values into the table in batch
+>cqlsh:employee_db> begin batch
+  insert into employee_info(emp_id,emp_name,designation,date_of_joining,salary,dept_name) 
+  values(1,'aaa','manager','2021-02-02',500000,'sales')  
+  insert into employee_info(emp_id,emp_name,designation,date_of_joining,salary,dept_name) 
+  values(2,'bbb','accountant','2020-02-02',100000,'sales') 
+  insert into employee_info(emp_id,emp_name,designation,date_of_joining,salary,dept_name) 
+  values(121,'ccc','accountant','2019-02-02',300000,'marketing') apply batch;
+
+>cqlsh:employee_db> select * from employee_info;
+ emp_id | date_of_joining                 | dept_name | designation | emp_name | salary
+--------+---------------------------------+-----------+-------------+----------+--------
+      1 | 2021-02-01 18:30:00.000000+0000 |     sales |     manager |      aaa | 500000
+      2 | 2020-02-01 18:30:00.000000+0000 |     sales |  accountant |      bbb | 100000
+    121 | 2019-02-01 18:30:00.000000+0000 | marketing |  accountant |      ccc | 300000
+
+ 
+
+4.Update Employee name and Department of Emp-Id 121
+   cqlsh:employee_db> update employee_info set emp_name='xyz' where emp_id=121;
+   cqlsh:employee_db> update employee_info set dept_name='executive' where emp_id=121;
+   cqlsh:employee_db> select * from employee_info;
+   
+   emp_id | date_of_joining                 | dept_name | designation | emp_name | salary
+--------+---------------------------------+-----------+-------------+----------+--------
+      1 | 2021-02-01 18:30:00.000000+0000 |     sales |     manager |      aaa | 500000
+      2 | 2020-02-01 18:30:00.000000+0000 |     sales |  accountant |      bbb | 100000
+    121 | 2019-02-01 18:30:00.000000+0000 | executive |  accountant |      xyz | 300000
+
+
+5. Sort the details of Employee records based on salary
+
+create table emp(id int, salary int,name text, primary key(id,salary));
+
+begin batch insert into emp(id,salary,name) values (1,89900,'kjl'); insert into emp(id,salary,name) values (2,70000,'uiu'); apply batch;
+
+paging off;
+Disabled Query paging.
+cqlsh:employee> select * from emp where id in (1,2) order by salary;
+
+ id | salary | name
+----+--------+------
+  2 |  70000 |  uiu
+  1 |  89900 |  kjl
+
+
+6.Alter the schema of the table Employee_Info to add a column Projects which stores a set of Projects done by the corresponding Employee.
+   cqlsh:employee_db> alter table employee_info add projects set<text>;
+   cqlsh:employee_db> select * from employee_info;
+
+ emp_id | date_of_joining                 | dept_name | designation | emp_name | projects | salary
+--------+---------------------------------+-----------+-------------+----------+----------+--------
+      1 | 2021-02-01 18:30:00.000000+0000 |     sales |     manager |      aaa |     null | 500000
+      2 | 2020-02-01 18:30:00.000000+0000 |     sales |  accountant |      bbb |     null | 100000
+    121 | 2019-02-01 18:30:00.000000+0000 | executive |  accountant |      xyz |     null | 300000
+
+(3 rows)
+
+7.Update the altered table to add project names.
+   cqlsh:employee_db> update employee_info  set projects=projects+{'1111'} where emp_id=1;
+   cqlsh:employee_db> update employee_info  set projects=projects+{'2222'} where emp_id=2;
+   cqlsh:employee_db> update employee_info  set projects=projects+{'2222'} where emp_id=121;
+   cqlsh:employee_db> select * from employee_info;
+
+ emp_id | date_of_joining                 | dept_name | designation | emp_name | projects | salary
+--------+---------------------------------+-----------+-------------+----------+----------+--------
+      1 | 2021-02-01 18:30:00.000000+0000 |     sales |     manager |      aaa | {'1111'} | 500000
+      2 | 2020-02-01 18:30:00.000000+0000 |     sales |  accountant |      bbb | {'2222'} | 100000
+    121 | 2019-02-01 18:30:00.000000+0000 | executive |  accountant |      xyz | {'2222'} | 300000
+
+
+
+8 Create a TTL of 15 seconds to display the values of Employees.
+
+insert into employee_info(emp_id,emp_name,designation,date_of_joining,salary,dept_name) 
+               ...   values(4,'abc','manager','2021-02-02',400000,'sales')  using ttl 30;
+cqlsh:employee_db> select * from employee_info;
+
+ emp_id | date_of_joining                 | dept_name | designation | emp_name | projects | salary
+--------+---------------------------------+-----------+-------------+----------+----------+--------
+      1 | 2021-02-01 18:30:00.000000+0000 |     sales |     manager |      aaa | {'1111'} | 500000
+      2 | 2020-02-01 18:30:00.000000+0000 |     sales |  accountant |      bbb | {'2222'} | 100000
+      4 | 2021-02-01 18:30:00.000000+0000 |     sales |     manager |      abc |     null | 400000
+    121 | 2019-02-01 18:30:00.000000+0000 | executive |  accountant |      xyz | {'2222'} | 300000
+
+cqlsh:employee_db> select ttl(emp_name) from employee_info where emp_id=4;
+
+ ttl(emp_name)
+---------------
+
+(0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
