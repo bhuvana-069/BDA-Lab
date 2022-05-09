@@ -1,0 +1,94 @@
+1 Create a key space by name Library
+
+  CREATE KEYSPACE lib WITH replication={'class':'SimpleStrategy','replication_factor' : 3};
+o/p:
+describe keyspaces;
+
+library1       system_auth  system        system_distributed  employee1   
+lib            bhuvana      students      employee            employeelab1
+"Students"     newstudents  employee_db   system_traces     
+system_schema  lab          employee_224  students1     
+----------------------------------------------------------------------------------------------------
+2. Create a column family by name Library-Info with attributes Stud_Id Primary Key,Counter_value of type Counter,Stud_Name, Book-Name, Book-Id, Date_of_issue.
+
+CREATE TABLE library_info(stud_id int,counter_value counter,stud_name text,book_name text,book_id int,date_of_issue timestamp,PRIMARY KEY(stud_id,stud_name,book_name,book_id,date_of_issue));
+
+o/p: SELECT * FROM lib.library_info;
+ 
+  stud_id | stud_name | book_name | date_of_issue | book_id | counter_value
+---------+-----------+-----------+---------------+---------+---------------
+----------------------------------------------------------------------------------------------------
+
+3. Insert the values into the table in batch
+
+ UPDATE library_info SET counter_value = counter_value+1 WHERE stud_id=111 and stud_name='sam' and book_name='ml' and date_of_issue='2020-10-12' and book_id=201;
+ UPDATE library_info SET counter_value = counter_value+1 WHERE stud_id=112 and stud_name='ram' and book_name='bda' and date_of_issue='2020-10-22' and book_id=205;
+ UPDATE library_info SET counter_value = counter_value+1 WHERE stud_id=113 and stud_name='siri' and book_name='ml' and date_of_issue='2020-10-20' and book_id=206;
+
+o/p:SELECT * FROM lib.library_info;
+
+ stud_id | stud_name | book_name | date_of_issue                   | book_id | counter_value
+---------+-----------+-----------+---------------------------------+---------+---------------
+     111 |       sam |        ml | 2020-10-11 18:30:00.000000+0000 |     201 |             1
+     113 |      siri |        ml | 2020-10-19 18:30:00.000000+0000 |     206 |             1
+     112 |       ram |       bda | 2020-10-21 18:30:00.000000+0000 |     205 |             1
+
+------------------------------------------------------------------------------------------------------
+
+
+4. Display the details of the table created and increase the value of the counter
+
+UPDATE library_info SET counter_value = counter_value+1 WHERE stud_id=113 and stud_name='siri' and book_name='ml' and date_of_issue='2020-10-20' and book_id=206;
+
+SELECT * FROM lib.library_info;
+
+ stud_id | stud_name | book_name | date_of_issue                   | book_id | counter_value
+---------+-----------+-----------+---------------------------------+---------+---------------
+     111 |       sam |        ml | 2020-10-11 18:30:00.000000+0000 |     201 |             1
+     113 |      siri |        ml | 2020-10-19 18:30:00.000000+0000 |     206 |             2
+     112 |       ram |       bda | 2020-10-21 18:30:00.000000+0000 |     205 |             1
+
+
+---------------------------------------------------------------------------------------------------
+
+
+5. Write a query to show that a student with id 112 has taken a book “BDA” 2 times.
+
+SELECT *FROM library_info WHERE stud_id=112;
+
+o/p: stud_id | stud_name | book_name | date_of_issue                   | book_id | counter_value
+---------+-----------+-----------+---------------------------------+---------+---------------
+     112 |       ram |       bda | 2020-10-21 18:30:00.000000+0000 |     205 |             2
+
+6. Export the created column to a csv file
+ COPY library_info(stud_id,counter_value,stud_name,book_name,book_id,date_of_issue) TO 'e:\libraryinfo.csv';
+
+o/p: 
+Using 11 child processes
+
+Starting copy of lib.library_info with columns [stud_id, counter_value, stud_name, book_name, book_id, date_of_issue].
+Processed: 3 rows; Rate:      24 rows/s; Avg. rate:      24 rows/s
+3 rows exported to 1 files in 0.136 seconds.
+
+ 
+7. Import a given csv dataset from local file system into Cassandra column family
+
+CREATE TABLE library_info1(stud_id int,counter_value counter,stud_name text,book_name text,book_id int,date_of_issue timestamp,PRIMARY KEY(stud_id,stud_name,book_name,book_id,date_of_issue));
+
+SELECT * FROM library_info1;
+
+stud_id | stud_name | book_name | book_id | date_of_issue | counter_value
+---------+-----------+-----------+---------+---------------+---------------
+
+
+COPY library_info1(stud_id,counter_value,stud_name,book_name,book_id,date_of_issue) TO 'e:\libraryinfo.csv';
+
+
+
+o/p:Using 11 child processes
+
+Starting copy of lib.library_info1 with columns [stud_id, counter_value, stud_name, book_name, book_id, date_of_issue].
+Processed: 3 rows; Rate:       5  rows/s; Avg. rate:       7 rows/s
+3 rows exported to 1 files in 0.135 seconds.
+
+
